@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Ponto</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        label, button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
+        input[type="text"], input[type="password"], input[type="time"], button {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .photo-container {
+            display: none;
+            text-align: center;
+        }
+        #selfie {
+            width: 100%;
+            max-width: 250px;
+            margin: 10px auto;
+            border: 2px solid #ddd;
+        }
+        .confirm-container {
+            display: none;
+            text-align: center;
+        }
+        .confirm-signature-container {
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Controle de Ponto</h1>
+        
+        <!-- Tela de Login -->
+        <div id="login-screen">
+            <label for="cpf">CPF:</label>
+            <input type="text" id="cpf" placeholder="Digite seu CPF" required>
+            <label for="senha">Senha:</label>
+            <input type="password" id="senha" placeholder="Digite sua senha" required>
+            <button onclick="login()">Entrar</button>
+        </div>
+
+        <!-- Tela de Registro de Ponto -->
+        <div id="ponto-screen" style="display: none;">
+            <h2>Bem-vindo, <span id="user-name"></span></h2>
+            <label for="hora">Hora de Entrada:</label>
+            <input type="time" id="hora" disabled>
+            <button onclick="startCamera()">Registrar Ponto</button>
+        </div>
+
+        <!-- Tela para Captura da Foto -->
+        <div class="photo-container" id="photo-container">
+            <h2>Capturar Foto</h2>
+            <video id="video" width="100%" height="auto" autoplay></video>
+            <button onclick="capturePhoto()">Tirar Foto</button>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+
+        <!-- Tela de Confirmação da Foto -->
+        <div class="confirm-container" id="confirm-container">
+            <h2>Confirmação</h2>
+            <img id="captured-image" width="100%" />
+            <button onclick="confirmSignature()">Deseja Assinar o PDF?</button>
+        </div>
+
+        <!-- Tela para Confirmar Assinatura -->
+        <div class="confirm-signature-container" id="confirm-signature-container">
+            <h2>Confirmar Assinatura</h2>
+            <button onclick="sendToWhatsapp(true)">Sim, Enviar PDF Assinado</button>
+            <button onclick="sendToWhatsapp(false)">Não, Voltar</button>
+        </div>
+    </div>
+
+    <script>
+        // Função de login
+        function login() {
+            var cpf = document.getElementById('cpf').value;
+            var senha = document.getElementById('senha').value;
+
+            // Apenas um exemplo simples de login
+            if(cpf === '43664247892' && senha === '123456') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('ponto-screen').style.display = 'block';
+                document.getElementById('user-name').textContent = 'Colaborador';
+                document.getElementById('hora').value = new Date().toLocaleTimeString();
+            } else {
+                alert('CPF ou senha incorretos!');
+            }
+        }
+
+        // Função para iniciar a câmera
+        function startCamera() {
+            document.getElementById('ponto-screen').style.display = 'none';
+            document.getElementById('photo-container').style.display = 'block';
+
+            // Acesso à câmera
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                document.getElementById('video').srcObject = stream;
+            })
+            .catch(function(error) {
+                console.log("Erro ao acessar a câmera: ", error);
+            });
+        }
+
+        // Função para capturar a foto
+        function capturePhoto() {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var image = canvas.toDataURL('image/png');
+            document.getElementById('captured-image').src = image;
+
+            // Esconde a câmera e mostra a confirmação
+            document.getElementById('photo-container').style.display = 'none';
+            document.getElementById('confirm-container').style.display = 'block';
+        }
+
+        // Função para confirmar assinatura
+        function confirmSignature() {
+            document.getElementById('confirm-container').style.display = 'none';
+            document.getElementById('confirm-signature-container').style.display = 'block';
+        }
+
+        // Função para gerar PDF com a selfie, CPF e dados adicionais
+        function generatePDF(imageData, cpf, signed) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Logo da empresa
+            doc.setFontSize(20);
+            doc.text("Whatsponto", 20, 20);
+
+            // Informações do colaborador
+            doc.setFontSize(14);
+            doc.text("Nome do Colaborador: Colaborador", 20, 30);
+            doc.text("CPF: " + cpf, 20, 40);
+            doc.text("Data e Hora: " + new Date().toLocaleString(), 20, 50);
+
+            // Adicionando a imagem (selfie)
+            doc.addImage(imageData, 'PNG', 20, 60, 150, 100);
+
+            // Adicionando a assinatura
+            doc.setFontSize(12);
+            doc.text("Assinatura do Colaborador:", 20, 170);
+            doc.line(20, 175, 180, 175); // Linha de assinatura
+            if (signed) {
+                doc.text("Assinado", 20, 180); // Marcando como assinado
+            }
+
+            // Rodapé
+            doc.setFontSize(10);
+            doc.text("Comprovante de Registro de Ponto", 20, 190);
+            doc.text("Esse documento foi gerado automaticamente e não requer aprovação manual.", 20, 200);
+
+            return doc.output('blob');
+        }
+
+        // Função para enviar o ponto via WhatsApp
+        function sendToWhatsapp(signed) {
+            var image = document.getElementById('captured-image').src;
+            var cpf = document.getElementById('cpf').value; // Pegando CPF
+
+            // Gerar o PDF
+            var pdfBlob = generatePDF(image, cpf, signed);  // Passando CPF e confirmação de assinatura
+            var pdfLink = URL.createObjectURL(pdfBlob);
+            var phoneNumber = "18997330574";  // Substitua pelo seu número
+            var message = "Ponto registrado!";
+
+            // Criar um link de WhatsApp com a mensagem
+            var whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}%0A${encodeURIComponent(pdfLink)}`;
+            window.open(whatsappLink, '_blank');
+        }
+    </script>
+</body>
+</html>
