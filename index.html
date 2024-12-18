@@ -5,18 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ponto</title>
     <link rel="manifest" href="/manifest.json">
-<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-                console.log('Service Worker registrado com sucesso:', registration);
-            })
-            .catch(function(error) {
-                console.log('Erro ao registrar o Service Worker:', error);
-            });
-    }
-</script>
-
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                })
+                .catch(function(error) {
+                    console.log('Erro ao registrar o Service Worker:', error);
+                });
+        }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
@@ -77,13 +76,7 @@
             <h2>Bem-vindo, <span id="user-name"></span></h2>
             <label for="hora">Hora de Entrada:</label>
             <input type="time" id="hora" disabled>
-            <button onclick="startCamera()">Registrar Ponto</button>
-        </div>
-
-        <!-- Tela de Confirmação -->
-        <div class="confirm-container" id="confirm-container">
-            <h2>Confirmação</h2>
-            <button onclick="sendToWhatsapp()">Confirmar Ponto</button>
+            <button onclick="confirmPonto()">Registrar Ponto</button>
         </div>
     </div>
 
@@ -104,50 +97,23 @@
             }
         }
 
-        // Função para registrar o ponto
-        function startCamera() {
-            document.getElementById('ponto-screen').style.display = 'none';
-            document.getElementById('confirm-container').style.display = 'block';
-        }
+        // Função para confirmar o ponto e enviar via WhatsApp
+        function confirmPonto() {
+            var cpf = document.getElementById('cpf').value;
+            var hora = document.getElementById('hora').value;
 
-        // Função para gerar PDF com os dados
-        function generatePDF(cpf) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            // Mensagem a ser enviada
+            var message = `Ponto registrado!\nCPF: ${cpf}\nHora de Entrada: ${hora}`;
 
-            // Logo da empresa
-            doc.setFontSize(20);
-            doc.text("Whatsponto", 20, 20);
+            // Número de telefone para enviar a mensagem (substitua pelo número desejado)
+            var phoneNumber = "18997330574";
 
-            // Informações do colaborador
-            doc.setFontSize(14);
-            doc.text("Nome do Colaborador: Colaborador", 20, 30);
-            doc.text("CPF: " + cpf, 20, 40);
-            doc.text("Data e Hora: " + new Date().toLocaleString(), 20, 50);
+            // Link para o WhatsApp
+            var whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-            // Rodapé
-            doc.setFontSize(10);
-            doc.text("Comprovante de Registro de Ponto", 20, 190);
-            doc.text("Esse documento foi gerado automaticamente e não requer aprovação manual.", 20, 200);
-
-            return doc.output('blob');
-        }
-
-        // Função para enviar o ponto via WhatsApp
-        function sendToWhatsapp() {
-            var cpf = document.getElementById('cpf').value; // Pegando CPF
-
-            // Gerar o PDF
-            var pdfBlob = generatePDF(cpf);  // Passando CPF para a função
-            var pdfLink = URL.createObjectURL(pdfBlob);
-            var phoneNumber = "18997330574";  // Substitua pelo seu número
-            var message = "Ponto registrado!";
-
-            // Criar um link de WhatsApp com a mensagem
-            var whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}%0A${encodeURIComponent(pdfLink)}`;
+            // Abrir o link do WhatsApp
             window.open(whatsappLink, '_blank');
         }
     </script>
-
 </body>
 </html>
