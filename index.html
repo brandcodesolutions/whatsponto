@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ponto</title>
     <link rel="manifest" href="/manifest.json">
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(function(registration) {
+                console.log('Service Worker registrado com sucesso:', registration);
+            })
+            .catch(function(error) {
+                console.log('Erro ao registrar o Service Worker:', error);
+            });
+    }
+</script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
@@ -45,20 +57,6 @@
         button:hover {
             background-color: #45a049;
         }
-        .photo-container {
-            display: none;
-            text-align: center;
-        }
-        #selfie {
-            width: 100%;
-            max-width: 250px;
-            margin: 10px auto;
-            border: 2px solid #ddd;
-        }
-        .confirm-container {
-            display: none;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -82,18 +80,9 @@
             <button onclick="startCamera()">Registrar Ponto</button>
         </div>
 
-        <!-- Tela para Captura da Foto -->
-        <div class="photo-container" id="photo-container">
-            <h2>Capturar Foto</h2>
-            <video id="video" width="100%" height="auto" autoplay></video>
-            <button onclick="capturePhoto()">Tirar Foto</button>
-            <canvas id="canvas" style="display:none;"></canvas>
-        </div>
-
         <!-- Tela de Confirmação -->
         <div class="confirm-container" id="confirm-container">
             <h2>Confirmação</h2>
-            <img id="captured-image" width="100%" />
             <button onclick="sendToWhatsapp()">Confirmar Ponto</button>
         </div>
     </div>
@@ -115,55 +104,50 @@
             }
         }
 
-        // Função para iniciar a câmera
+        // Função para registrar o ponto
         function startCamera() {
             document.getElementById('ponto-screen').style.display = 'none';
-            document.getElementById('photo-container').style.display = 'block';
-
-            // Acesso à câmera
-            navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                document.getElementById('video').srcObject = stream;
-            })
-            .catch(function(error) {
-                console.log("Erro ao acessar a câmera: ", error);
-            });
-        }
-
-        // Função para capturar a foto
-        function capturePhoto() {
-            var video = document.getElementById('video');
-            var canvas = document.getElementById('canvas');
-            var context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            var image = canvas.toDataURL('image/png');
-            document.getElementById('captured-image').src = image;
-
-            // Esconde a câmera e mostra a confirmação
-            document.getElementById('photo-container').style.display = 'none';
             document.getElementById('confirm-container').style.display = 'block';
         }
 
-        // Função para enviar o link da imagem para o WhatsApp
+        // Função para gerar PDF com os dados
+        function generatePDF(cpf) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Logo da empresa
+            doc.setFontSize(20);
+            doc.text("Whatsponto", 20, 20);
+
+            // Informações do colaborador
+            doc.setFontSize(14);
+            doc.text("Nome do Colaborador: Colaborador", 20, 30);
+            doc.text("CPF: " + cpf, 20, 40);
+            doc.text("Data e Hora: " + new Date().toLocaleString(), 20, 50);
+
+            // Rodapé
+            doc.setFontSize(10);
+            doc.text("Comprovante de Registro de Ponto", 20, 190);
+            doc.text("Esse documento foi gerado automaticamente e não requer aprovação manual.", 20, 200);
+
+            return doc.output('blob');
+        }
+
+        // Função para enviar o ponto via WhatsApp
         function sendToWhatsapp() {
-            var image = document.getElementById('captured-image').src;
             var cpf = document.getElementById('cpf').value; // Pegando CPF
 
-            // Criar o link da imagem
-            var imageLink = encodeURIComponent(image);
-            var message = `Ponto registrado!\n\nNome: Colaborador\nCPF: ${cpf}\n\nImagem da selfie: ${imageLink}`;
+            // Gerar o PDF
+            var pdfBlob = generatePDF(cpf);  // Passando CPF para a função
+            var pdfLink = URL.createObjectURL(pdfBlob);
+            var phoneNumber = "18997330574";  // Substitua pelo seu número
+            var message = "Ponto registrado!";
 
-            // Número de telefone do WhatsApp
-            var phoneNumber = "18997330574"; // Substitua pelo seu número
-
-            // Criar link do WhatsApp
-            var whatsappLink = `https://wa.me/${phoneNumber}?text=${message}`;
-
-            // Abrir o link do WhatsApp
+            // Criar um link de WhatsApp com a mensagem
+            var whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}%0A${encodeURIComponent(pdfLink)}`;
             window.open(whatsappLink, '_blank');
         }
     </script>
+
 </body>
 </html>
