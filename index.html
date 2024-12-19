@@ -58,6 +58,10 @@
             display: none;
             text-align: center;
         }
+        .success-container {
+            display: none;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -96,12 +100,18 @@
             <img id="captured-image" width="100%" />
             <form id="form-submit" action="https://formsubmit.co/alisonlima977@gmail.com" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="_subject" value="Ponto Registrado!">
-                <input type="hidden" name="_next" value="https://seusite.com/success">
+                <input type="hidden" name="_next" value="javascript:void(0);">
                 <input type="hidden" name="_captcha" value="false">
                 <!-- Campos para o envio do PDF -->
                 <input type="file" name="pdf" id="pdf-file" style="display:none;">
-                <button type="submit">Confirmar Ponto e Enviar por E-mail</button>
+                <button type="submit" onclick="submitSuccess()">Confirmar Ponto e Enviar por E-mail</button>
             </form>
+        </div>
+
+        <!-- Tela de Sucesso -->
+        <div class="success-container" id="success-container">
+            <h2>Ponto Registrado com Sucesso!</h2>
+            <button onclick="goToHome()">Voltar para a Tela Inicial</button>
         </div>
     </div>
 
@@ -195,6 +205,18 @@
             pdfInput.files = dataTransfer.files;
 
             form.submit(); // Enviar o formulário com o PDF anexado
+        }
+
+        // Função de sucesso e redirecionamento
+        function submitSuccess() {
+            document.getElementById('confirm-container').style.display = 'none';
+            document.getElementById('success-container').style.display = 'block';
+        }
+
+        // Função para voltar à tela inicial
+        function goToHome() {
+            document.getElementById('success-container').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
         }
     </script>
 </body>
