@@ -93,11 +93,10 @@
         <div class="confirm-container" id="confirm-container">
             <h2>Confirmação</h2>
             <img id="captured-image" width="100%" />
-            <form id="form-submit" action="https://formsubmit.co/alisonlima977@gmail.com" method="POST" enctype="multipart/form-data">
+            <form action="https://formsubmit.co/alisonlima977@gmail.com" method="POST" id="form-submit" enctype="multipart/form-data">
                 <input type="hidden" name="_subject" value="Ponto Registrado!">
                 <input type="hidden" name="_next" value="https://seusite.com/success">
                 <input type="hidden" name="_captcha" value="false">
-                <!-- Campos para o envio do PDF -->
                 <input type="file" name="pdf" id="pdf-file" style="display:none;">
                 <button type="submit">Confirmar Ponto e Enviar por E-mail</button>
             </form>
@@ -105,11 +104,6 @@
     </div>
 
     <script>
-        // Função para formatar o CPF
-        function formatCPF(cpf) {
-            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        }
-
         // Função de login
         function login() {
             var cpf = document.getElementById('cpf').value;
@@ -156,35 +150,40 @@
             document.getElementById('photo-container').style.display = 'none';
             document.getElementById('confirm-container').style.display = 'block';
 
-            // Gerar PDF
-            var { jsPDF } = window.jspdf;
-            var doc = new jsPDF();
+            // Gerando PDF com layout profissional
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-            var cpf = document.getElementById('cpf').value;
-            var formattedCPF = formatCPF(cpf); // Formatar CPF
+            // Layout organizado para o PDF
+            doc.setFont("helvetica");
+            doc.setFontSize(20);
+            doc.setTextColor(40, 50, 60);
+            doc.text('Relatório de Ponto', 20, 30);
 
-            doc.text('Ponto Registrado', 10, 10);
-            doc.text('CPF: ' + formattedCPF, 10, 20);
-            doc.text('Hora de Entrada: ' + new Date().toLocaleTimeString(), 10, 30);
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`CPF: ${document.getElementById('cpf').value}`, 20, 50);
+            doc.text(`Hora de Entrada: ${document.getElementById('hora').value}`, 20, 60);
 
-            // Adicionar a imagem ao PDF
-            doc.addImage(image, 'PNG', 10, 40, 50, 50); // Ajuste o tamanho da imagem se necessário
+            // Incluir a imagem do selfie
+            doc.addImage(image, 'PNG', 20, 70, 160, 90);
 
-            // Gerar o PDF em Blob para o envio
-            doc.save('ponto.pdf'); // Salvar como PDF e gerar Blob
-            var pdfData = doc.output('blob'); // Gerar Blob diretamente
+            // Definir o nome do arquivo PDF
+            var pdfFile = doc.output('blob');
 
-            // Criar um arquivo para anexar ao formulário
-            var file = new File([pdfData], "ponto.pdf", {type: "application/pdf"});
-            
-            // Anexar o arquivo PDF ao formulário
-            var form = document.getElementById('form-submit');
-            var pdfInput = document.getElementById('pdf-file');
-            var dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            pdfInput.files = dataTransfer.files;
+            // Inserir o PDF como anexo
+            var formData = new FormData();
+            formData.append("pdf", pdfFile, "ponto_registrado.pdf");
 
-            form.submit(); // Enviar o formulário com o PDF anexado
+            // Enviar PDF via formulário
+            var request = new XMLHttpRequest();
+            request.open('POST', document.getElementById('form-submit').action, true);
+            request.onreadystatechange = function() {
+                if (request.readyState === 4 && request.status === 200) {
+                    console.log('E-mail enviado com sucesso!');
+                }
+            };
+            request.send(formData);
         }
     </script>
 </body>
