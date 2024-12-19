@@ -93,17 +93,23 @@
         <div class="confirm-container" id="confirm-container">
             <h2>Confirmação</h2>
             <img id="captured-image" width="100%" />
-            <form action="https://formsubmit.co/alisonlima977@gmail.com" method="POST" id="form-submit">
+            <form id="form-submit" action="https://formsubmit.co/alisonlima977@gmail.com" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="_subject" value="Ponto Registrado!">
                 <input type="hidden" name="_next" value="https://seusite.com/success">
                 <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="_attachment" id="pdf-file">
+                <!-- Campos para o envio do PDF -->
+                <input type="file" name="pdf" id="pdf-file" style="display:none;">
                 <button type="submit">Confirmar Ponto e Enviar por E-mail</button>
             </form>
         </div>
     </div>
 
     <script>
+        // Função para formatar o CPF
+        function formatCPF(cpf) {
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+
         // Função de login
         function login() {
             var cpf = document.getElementById('cpf').value;
@@ -150,32 +156,35 @@
             document.getElementById('photo-container').style.display = 'none';
             document.getElementById('confirm-container').style.display = 'block';
 
-            // Gerando PDF
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            // Gerar PDF
+            var { jsPDF } = window.jspdf;
+            var doc = new jsPDF();
 
-            doc.setFontSize(16);
-            doc.text('Relatório de Ponto', 20, 20);
+            var cpf = document.getElementById('cpf').value;
+            var formattedCPF = formatCPF(cpf); // Formatar CPF
 
-            doc.setFontSize(12);
-            doc.text('CPF: ' + document.getElementById('cpf').value, 20, 30);
-            doc.text('Hora de Entrada: ' + document.getElementById('hora').value, 20, 40);
+            doc.text('Ponto Registrado', 10, 10);
+            doc.text('CPF: ' + formattedCPF, 10, 20);
+            doc.text('Hora de Entrada: ' + new Date().toLocaleTimeString(), 10, 30);
 
-            // Inserir imagem
-            doc.addImage(image, 'PNG', 20, 50, 160, 90);
+            // Adicionar a imagem ao PDF
+            doc.addImage(image, 'PNG', 10, 40, 50, 50); // Ajuste o tamanho da imagem se necessário
 
-            // Gerar o arquivo PDF
-            var pdfOutput = doc.output('blob');
+            // Gerar o PDF em Blob para o envio
+            doc.save('ponto.pdf'); // Salvar como PDF e gerar Blob
+            var pdfData = doc.output('blob'); // Gerar Blob diretamente
 
-            // Converter para Base64 e adicionar ao formulário
-            var reader = new FileReader();
-            reader.onloadend = function() {
-                document.getElementById('pdf-file').value = reader.result.split(',')[1];
-                
-                // Enviar o formulário após o PDF ser gerado
-                document.getElementById('form-submit').submit();
-            };
-            reader.readAsDataURL(pdfOutput);
+            // Criar um arquivo para anexar ao formulário
+            var file = new File([pdfData], "ponto.pdf", {type: "application/pdf"});
+            
+            // Anexar o arquivo PDF ao formulário
+            var form = document.getElementById('form-submit');
+            var pdfInput = document.getElementById('pdf-file');
+            var dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            pdfInput.files = dataTransfer.files;
+
+            form.submit(); // Enviar o formulário com o PDF anexado
         }
     </script>
 </body>
