@@ -66,16 +66,17 @@
         
         <!-- Tela de Login -->
         <div id="login-screen">
-            <label for="cpf">CPF:</label>
-            <input type="text" id="cpf" placeholder="Digite seu CPF" required>
-            <label for="senha">Senha:</label>
-            <input type="password" id="senha" placeholder="Digite sua senha" required>
+            <label for="matricula">Matrícula:</label>
+            <input type="text" id="matricula" placeholder="Digite sua matrícula" required>
+            <div id="user-name-container">
+                <p id="user-name"></p>
+            </div>
             <button onclick="login()">Entrar</button>
         </div>
 
         <!-- Tela de Registro de Ponto -->
         <div id="ponto-screen" style="display: none;">
-            <h2>Bem-vindo, <span id="user-name"></span></h2>
+            <h2>Bem-vindo, <span id="user-name-display"></span></h2>
             <label for="hora">Hora de Entrada:</label>
             <input type="time" id="hora" disabled>
             <button onclick="startCamera()">Registrar Ponto</button>
@@ -105,24 +106,31 @@
     </div>
 
     <script>
-        // Função para formatar o CPF
-        function formatCPF(cpf) {
-            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        // Dicionário de matrículas e seus respectivos nomes
+        const matriculas = {
+            "1234": "Alison",
+            "4321": "Lucas",
+            "5678": "Maria",
+            "8765": "João"
+        };
+
+        // Função para formatar a matrícula (CPF aqui é apenas para exemplificação)
+        function formatMatricula(matricula) {
+            return matricula;
         }
 
         // Função de login
         function login() {
-            var cpf = document.getElementById('cpf').value;
-            var senha = document.getElementById('senha').value;
-
-            // Apenas um exemplo simples de login
-            if(cpf === '43664247892' && senha === '123456') {
+            var matricula = document.getElementById('matricula').value;
+            
+            // Verifica se a matrícula existe no dicionário
+            if(matriculas[matricula]) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('ponto-screen').style.display = 'block';
-                document.getElementById('user-name').textContent = 'Colaborador';
+                document.getElementById('user-name-display').textContent = matriculas[matricula];
                 document.getElementById('hora').value = new Date().toLocaleTimeString();
             } else {
-                alert('CPF ou senha incorretos!');
+                alert('Matrícula inválida!');
             }
         }
 
@@ -160,15 +168,17 @@
             var { jsPDF } = window.jspdf;
             var doc = new jsPDF();
 
-            var cpf = document.getElementById('cpf').value;
-            var formattedCPF = formatCPF(cpf); // Formatar CPF
+            var matricula = document.getElementById('matricula').value;
+            var userName = matriculas[matricula]; // Nome do usuário com base na matrícula
+            var formattedMatricula = formatMatricula(matricula); // Formatar matrícula
 
             doc.text('Ponto Registrado', 10, 10);
-            doc.text('CPF: ' + formattedCPF, 10, 20);
-            doc.text('Hora de Entrada: ' + new Date().toLocaleTimeString(), 10, 30);
+            doc.text('Matrícula: ' + formattedMatricula, 10, 20);
+            doc.text('Nome: ' + userName, 10, 30);
+            doc.text('Hora de Entrada: ' + new Date().toLocaleTimeString(), 10, 40);
 
             // Adicionar a imagem ao PDF
-            doc.addImage(image, 'PNG', 10, 40, 50, 50); // Ajuste o tamanho da imagem se necessário
+            doc.addImage(image, 'PNG', 10, 50, 50, 50); // Ajuste o tamanho da imagem se necessário
 
             // Gerar o PDF em Blob para o envio
             doc.save('ponto.pdf'); // Salvar como PDF e gerar Blob
