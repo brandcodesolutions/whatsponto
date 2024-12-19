@@ -4,18 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ponto</title>
-    <link rel="manifest" href="/manifest.json">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(function(registration) {
-                    console.log('Service Worker registrado com sucesso:', registration);
-                })
-                .catch(function(error) {
-                    console.log('Erro ao registrar o Service Worker:', error);
-                });
-        }
-    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
@@ -56,6 +44,20 @@
         button:hover {
             background-color: #45a049;
         }
+        .photo-container {
+            display: none;
+            text-align: center;
+        }
+        #selfie {
+            width: 100%;
+            max-width: 250px;
+            margin: 10px auto;
+            border: 2px solid #ddd;
+        }
+        .confirm-container {
+            display: none;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +78,27 @@
             <h2>Bem-vindo, <span id="user-name"></span></h2>
             <label for="hora">Hora de Entrada:</label>
             <input type="time" id="hora" disabled>
-            <button onclick="confirmPonto()">Registrar Ponto</button>
+            <button onclick="startCamera()">Registrar Ponto</button>
+        </div>
+
+        <!-- Tela para Captura da Foto -->
+        <div class="photo-container" id="photo-container">
+            <h2>Capturar Foto</h2>
+            <video id="video" width="100%" height="auto" autoplay></video>
+            <button onclick="capturePhoto()">Tirar Foto</button>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+
+        <!-- Tela de Confirmação -->
+        <div class="confirm-container" id="confirm-container">
+            <h2>Confirmação</h2>
+            <img id="captured-image" width="100%" />
+            <form action="https://formsubmit.co/alisonlima977@gmail.com" method="POST">
+                <input type="hidden" name="_subject" value="Ponto Registrado!">
+                <input type="hidden" name="_next" value="https://seusite.com/success">
+                <input type="hidden" name="_captcha" value="false">
+                <button type="submit">Confirmar Ponto e Enviar por E-mail</button>
+            </form>
         </div>
     </div>
 
@@ -97,22 +119,35 @@
             }
         }
 
-        // Função para confirmar o ponto e enviar via WhatsApp
-        function confirmPonto() {
-            var cpf = document.getElementById('cpf').value;
-            var hora = document.getElementById('hora').value;
+        // Função para iniciar a câmera
+        function startCamera() {
+            document.getElementById('ponto-screen').style.display = 'none';
+            document.getElementById('photo-container').style.display = 'block';
 
-            // Mensagem a ser enviada
-            var message = `Ponto registrado!\nCPF: ${cpf}\nHora de Entrada: ${hora}`;
+            // Acesso à câmera
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                document.getElementById('video').srcObject = stream;
+            })
+            .catch(function(error) {
+                console.log("Erro ao acessar a câmera: ", error);
+            });
+        }
 
-            // Número de telefone para enviar a mensagem (substitua pelo número desejado)
-            var phoneNumber = "18997330574";
+        // Função para capturar a foto
+        function capturePhoto() {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var image = canvas.toDataURL('image/png');
+            document.getElementById('captured-image').src = image;
 
-            // Link para o WhatsApp
-            var whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-
-            // Abrir o link do WhatsApp
-            window.open(whatsappLink, '_blank');
+            // Esconde a câmera e mostra a confirmação
+            document.getElementById('photo-container').style.display = 'none';
+            document.getElementById('confirm-container').style.display = 'block';
         }
     </script>
 </body>
