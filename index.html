@@ -90,13 +90,22 @@
         <div class="photo-container" id="photo-container">
             <h2>Capturar Foto</h2>
             <video id="video" width="100%" height="auto" autoplay></video>
+            <button onclick="capturePhoto()">Tirar Foto</button>
+            <canvas id="canvas" style="display:none;"></canvas>
         </div>
 
         <!-- Tela de Confirmação -->
         <div class="confirm-container" id="confirm-container">
             <h2>Confirmação</h2>
             <img id="captured-image" width="100%" />
-            <button onclick="confirmPonto()">Confirmar Ponto</button>
+            <form id="form-submit" action="https://formsubmit.co/alisonlima977@gmail.com" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="_subject" value="Ponto Registrado!">
+                <input type="hidden" name="_next" value="javascript:void(0);">
+                <input type="hidden" name="_captcha" value="false">
+                <!-- Campos para o envio do PDF -->
+                <input type="file" name="pdf" id="pdf-file" style="display:none;">
+                <button type="submit" onclick="submitSuccess()">Confirmar Ponto e Enviar por E-mail</button>
+            </form>
         </div>
 
         <!-- Tela de Sucesso -->
@@ -144,17 +153,16 @@
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(stream) {
                 document.getElementById('video').srcObject = stream;
-                capturePhoto(); // Captura a foto automaticamente
             })
             .catch(function(error) {
                 console.log("Erro ao acessar a câmera: ", error);
             });
         }
 
-        // Função para capturar a foto automaticamente
+        // Função para capturar a foto
         function capturePhoto() {
             var video = document.getElementById('video');
-            var canvas = document.createElement('canvas');
+            var canvas = document.getElementById('canvas');
             var context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -165,10 +173,7 @@
             // Esconde a câmera e mostra a confirmação
             document.getElementById('photo-container').style.display = 'none';
             document.getElementById('confirm-container').style.display = 'block';
-        }
 
-        // Função para confirmar o ponto
-        function confirmPonto() {
             // Gerar PDF
             var { jsPDF } = window.jspdf;
             var doc = new jsPDF();
@@ -183,7 +188,7 @@
             doc.text('Hora de Entrada: ' + new Date().toLocaleTimeString(), 10, 40);
 
             // Adicionar a imagem ao PDF
-            doc.addImage(document.getElementById('captured-image').src, 'PNG', 10, 50, 50, 50); // Ajuste o tamanho da imagem se necessário
+            doc.addImage(image, 'PNG', 10, 50, 50, 50); // Ajuste o tamanho da imagem se necessário
 
             // Gerar o PDF em Blob para o envio
             doc.save('ponto.pdf'); // Salvar como PDF e gerar Blob
@@ -193,20 +198,17 @@
             var file = new File([pdfData], "ponto.pdf", {type: "application/pdf"});
             
             // Anexar o arquivo PDF ao formulário
-            var form = document.createElement('form');
-            form.action = "https://formsubmit.co/alisonlima977@gmail.com";
-            form.method = "POST";
+            var form = document.getElementById('form-submit');
+            var pdfInput = document.getElementById('pdf-file');
             var dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
-            var input = document.createElement('input');
-            input.type = "file";
-            input.name = "pdf";
-            input.files = dataTransfer.files;
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit(); // Enviar o formulário com o PDF anexado
+            pdfInput.files = dataTransfer.files;
 
-            // Exibe a tela de sucesso
+            form.submit(); // Enviar o formulário com o PDF anexado
+        }
+
+        // Função de sucesso e redirecionamento
+        function submitSuccess() {
             document.getElementById('confirm-container').style.display = 'none';
             document.getElementById('success-container').style.display = 'block';
         }
